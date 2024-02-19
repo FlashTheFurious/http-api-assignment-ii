@@ -1,36 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>Our simple HTTP server</title>
-  <link rel="stylesheet" type="text/css" href="/style.css">
-  
-  <script>
+  <head>
+    <title>Our simple HTTP server</title>
+    <link rel="stylesheet" type="text/css" href="/style.css" />
 
-  </script>
-</head>
-<body>
-  <section id="top">
-    <h3>POST Status Code Tests</h3>
-    <form id="nameForm" action="/addUser" method="post">
-      <label for="name">Name: </label>
-      <input id="nameField" type="text" name="name" />
-      <label for="age">Age: </label>
-      <input id="ageField" type="number" name="age" min="0" max="100" step="1"/>
-      <input type="submit" value="Add User" />
-    </form>
-    <form id="userForm" action="/getUsers" method="get">
-      <select id='urlField'>
-        <option value='/getUsers'>/getUsers</option>
-        <option value='/notReal'>/notReal</option>
-      </select>
-      <select id="methodSelect">
-        <option value="get">GET</option>
-        <option value="head">HEAD</option>
-      </select>
-      <input type="submit" value="Get User" />
-    </form>
-  </section>
-  <section id="content">
-  </section>
-</body>
+    <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                // Handle the Add User form submission
+                const nameForm = document.getElementById('nameForm');
+                nameForm.addEventListener('submit', function(event) {
+                  event.preventDefault();
+                  const name = document.getElementById('nameField').value;
+                  const age = document.getElementById('ageField').value;
+
+                  fetch('/addUser', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, age }),
+                  })
+                  .then(response => {
+                    if (response.status === 204) {
+                      return { message: 'Updated (No Content)', status: response.status };
+                    } else if (!response.ok) {
+                      throw new Error('Network response was not ok.');
+                    }
+                    return response.json();
+                  })
+                  .then(data => {
+                    document.getElementById('content').innerText = data.message;
+                  })
+                  .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                  });
+                });
+
+                // Handle the Get User form submission
+      const userForm = document.getElementById('userForm');
+      userForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const url = document.getElementById('urlField').value;
+        const method = document.getElementById('methodSelect').value.toUpperCase();
+
+        fetch(url, { method: method })
+        .then(response => {
+          if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+          console.log(`${method} ${response.url} ${response.status} (${response.statusText})`);
+          return method === 'GET' ? response.json() : null;
+        })
+        .then(data => {
+          if (data) {
+            const formattedData = JSON.stringify(data, null, 2);
+            console.log(formattedData);
+            document.getElementById('content').innerText = formattedData;
+          } else {
+            document.getElementById('content').innerText = 'Success';
+          }
+        })
+        .catch(error => {
+          document.getElementById('content').innerText = error.message;
+          console.error(error);
+        });
+                });
+              });
+    </script>
+  </head>
+  <body>
+    <section id="top">
+      <h3>POST Status Code Tests</h3>
+      <form id="nameForm">
+        <label for="name">Name: </label>
+        <input id="nameField" type="text" name="name" />
+        <label for="age">Age: </label>
+        <input
+          id="ageField"
+          type="number"
+          name="age"
+          min="0"
+          max="100"
+          step="1"
+        />
+        <input type="submit" value="Add User" />
+      </form>
+      <form id="userForm">
+        <select id="urlField">
+          <option value="/getUsers">/getUsers</option>
+          <option value="/notReal">/notReal</option>
+        </select>
+        <select id="methodSelect">
+          <option value="get">GET</option>
+          <option value="head">HEAD</option>
+        </select>
+        <input type="submit" value="Get User" />
+      </form>
+    </section>
+    <section id="content"></section>
+  </body>
 </html>
